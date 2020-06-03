@@ -1,8 +1,9 @@
 #!/usr/bin/env python
 
-"""Package entry point."""
+"""Main script."""
 
-from ._main import main
+def main():
+    pass
 
 
 if __name__ == '__main__':  # pragma: no cover
