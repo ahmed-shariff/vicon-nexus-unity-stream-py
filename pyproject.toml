@@ -33,6 +33,7 @@ python = "^3.6"
 # TODO: Remove these and add your library's requirements
 click = "^6.0"
 minilog = "^1.5"
+flask_restful = "^0.3.8"
 
 [tool.poetry.dev-dependencies]
 
@@ -69,7 +70,7 @@ ipython = "^7.12.0"
 
 [tool.poetry.scripts]
 
-vicon-nexus-stream = "vicon_nexus_unity_stream_py.cli:main"
+vicon-nexus-stream = "vicon_nexus_unity_stream_py.cli:_main"
 
 [tool.black]
 
