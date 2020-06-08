@@ -23,6 +23,7 @@ def get_client(connection=None):
     while not client.IsConnected():
         client.Connect(connection)
     log.i('Connected to vicon data stream')
+    client.EnableSegmentData()
     return client
     
 
@@ -34,19 +35,33 @@ def _init_api(connection=None):
     class ViconMarkerStream(Resource):
         def get(self):
             if client.IsConnected() and client.GetFrame():
-                return {"data": {"markers": 10}}
+                return {"data": get_data(client, 'test')}
             
     api.add_resource(ViconMarkerStream, '/')
     app.run()
-    
-            
+
+
+def get_data(client, subject_name):
+    data = {}
+    # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
+    for segment in client.GetSegmentNames(subject_name):
+        segment_data = {}
+        translation, status = client.GetSegmentGlobalTranslation(subject_name, segment)
+        segment_data['translation'] = translation
+        segment_data['translation_status'] = status
+        rotation, status = client.GetSegmentGlobalRotationMatrix(subject_name, segment)
+        segment_data['rotation'] = rotation
+        segment_data['rotation_status'] = status
+        data[segment] = segment_data
+    return data
+
+
 def main(connection=None):
     client = get_client(connection)
     try:
-        while client.IsConnected():
+        if client.IsConnected():
             if client.GetFrame():
-                # send data
-                pass
+                print(get_data(client, 'test'))
 
     except ViconDataStream.DataStreamException as e:
         log.e( f'Error: {e}' )
