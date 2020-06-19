@@ -24,6 +24,11 @@ def get_client(connection=None):
         client.Connect(connection)
     log.i('Connected to vicon data stream')
     client.EnableSegmentData()
+    client.EnableMarkerData()
+##    client.SetAxisMapping(ViconDataStream.Client.AxisMapping.EForward,
+##                          ViconDataStream.Client.AxisMapping.EUp,
+##                          ViconDataStream.Client.AxisMapping.ELeft)
+    print(client.GetAxisMapping())
     return client
     
 
@@ -35,7 +40,7 @@ def _init_api(connection=None):
     class ViconMarkerStream(Resource):
         def get(self):
             if client.IsConnected() and client.GetFrame():
-                return {"data": get_data(client, 'test')}
+                return get_data(client, 'test')
             
     api.add_resource(ViconMarkerStream, '/')
     app.run()
@@ -44,22 +49,35 @@ def _init_api(connection=None):
 def get_data(client, subject_name):
     data = {}
     # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
-    for segment in client.GetSegmentNames(subject_name):
-        segment_data = {}
-        translation, status = client.GetSegmentGlobalTranslation(subject_name, segment)
-        segment_data['translation'] = translation
-        segment_data['translation_status'] = status
-        rotation, status = client.GetSegmentGlobalRotationMatrix(subject_name, segment)
-        segment_data['rotation'] = rotation
-        segment_data['rotation_status'] = status
-        data[segment] = segment_data
+    # sprint(client.GetSegmentNames(subject_name))
+##    for segment in client.GetSegmentNames(subject_name):
+##        segment_data = {}
+##        translation, status = client.GetSegmentGlobalTranslation(subject_name, segment)
+##        segment_data['translation'] = translation
+##        segment_data['translation_status'] = status
+##        rotation, status = client.GetSegmentGlobalRotationMatrix(subject_name, segment)
+##        segment_data['rotation'] = rotation
+##        segment_data['rotation_status'] = status
+##        data[segment] = segment_data
+##        
+    marker_segment_data = {}
+    marker_data = {}
+    for marker, segment in client.GetMarkerNames(subject_name):
+        try:
+            marker_segment_data[segment].append(marker)
+        except KeyError:
+            marker_segment_data[segment] = [marker]
+        marker_data[marker] = client.GetMarkerGlobalTranslation(subject_name, marker)[0]
+        # print(client.GetMarkerGlobalTranslation(subject_name, marker))
+    data['marker'] = marker_data
+    data['segment'] = marker_segment_data
     return data
 
 
 def main(connection=None):
     client = get_client(connection)
     try:
-        if client.IsConnected():
+        while client.IsConnected():
             if client.GetFrame():
                 print(get_data(client, 'test'))
 
