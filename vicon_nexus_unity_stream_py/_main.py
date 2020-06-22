@@ -38,39 +38,39 @@ def _init_api(connection=None):
     api = Api(app)
 
     class ViconMarkerStream(Resource):
-        def get(self):
+        def get(self, data_type, subject_name):
             if client.IsConnected() and client.GetFrame():
-                return get_data(client, 'test')
+                return get_data(client, data_type, subject_name)
             
-    api.add_resource(ViconMarkerStream, '/')
+    api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
     app.run()
 
 
-def get_data(client, subject_name):
+def get_data(client, data_type, subject_name):
     data = {}
     # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
     # sprint(client.GetSegmentNames(subject_name))
-##    for segment in client.GetSegmentNames(subject_name):
-##        segment_data = {}
-##        translation, status = client.GetSegmentGlobalTranslation(subject_name, segment)
-##        segment_data['translation'] = translation
-##        segment_data['translation_status'] = status
-##        rotation, status = client.GetSegmentGlobalRotationMatrix(subject_name, segment)
-##        segment_data['rotation'] = rotation
-##        segment_data['rotation_status'] = status
-##        data[segment] = segment_data
-##        
-    marker_segment_data = {}
-    marker_data = {}
-    for marker, segment in client.GetMarkerNames(subject_name):
-        try:
-            marker_segment_data[segment].append(marker)
-        except KeyError:
-            marker_segment_data[segment] = [marker]
-        marker_data[marker] = client.GetMarkerGlobalTranslation(subject_name, marker)[0]
-        # print(client.GetMarkerGlobalTranslation(subject_name, marker))
-    data['marker'] = marker_data
-    data['segment'] = marker_segment_data
+    if data_type == "marker":
+        marker_segment_data = {}
+        marker_data = {}
+        for marker, segment in client.GetMarkerNames(subject_name):
+            try:
+                marker_segment_data[segment].append(marker)
+            except KeyError:
+                marker_segment_data[segment] = [marker]
+            marker_data[marker] = client.GetMarkerGlobalTranslation(subject_name, marker)[0]
+            # print(client.GetMarkerGlobalTranslation(subject_name, marker))
+        data['data'] = marker_data
+        data['hierachy'] = marker_segment_data
+        
+    elif data_type == "segment":
+        segment_data = {}
+        for segment in client.GetSegmentNames(subject_name):
+            translation, status = client.GetSegmentGlobalTranslation(subject_name, segment)
+            rotation, status = client.GetSegmentGlobalRotationQuaternion(subject_name, segment)
+            segment_data[segment] = translation + rotation
+        data['data'] = segment_data
+            
     return data
 
 
