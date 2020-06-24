@@ -32,7 +32,7 @@ def get_client(connection=None):
     return client
     
 
-def _init_api(connection=None):
+def _init_api(connection=None, host="127.0.0.1", port="5000"):
     client = get_client(connection)
     app = Flask("vicon-ds")
     api = Api(app)
@@ -43,7 +43,7 @@ def _init_api(connection=None):
                 return get_data(client, data_type, subject_name)
             
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
-    app.run()
+    app.run(host=host, port=int(port))
 
 
 def get_data(client, data_type, subject_name):

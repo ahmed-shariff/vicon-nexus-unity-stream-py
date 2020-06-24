@@ -18,8 +18,10 @@ def test(connection):
 
 @click.command()
 @click.option("-c", "--connection", default='localhost:801')
-def server(connection):
-    _init_api(connection)
+@click.option("-h", "--host", default='127.0.0.1')
+@click.option("-p", "--port", default='5000')
+def server(connection, host, port):
+    _init_api(connection, host, port)
 
 
 _main.add_command(test)
