@@ -30,18 +30,24 @@ def get_client(connection=None):
 ##                          ViconDataStream.Client.AxisMapping.ELeft)
     print(client.GetAxisMapping())
     return client
-    
+
 
 def _init_api(connection=None, host="127.0.0.1", port="5000"):
-    client = get_client(connection)
+    try:
+        client = get_client(connection)
+    except Exception as e:
+        log.e("Failed to connect to client")
+        log.e(e.message)
+        client = None
     app = Flask("vicon-ds")
     api = Api(app)
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
-            if client.IsConnected() and client.GetFrame():
+            if client is not None and client.IsConnected() and client.GetFrame():
                 return get_data(client, data_type, subject_name)
-            
+            return "restart:  client didn't connect", 404
+
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
     app.run(host=host, port=int(port))
 
