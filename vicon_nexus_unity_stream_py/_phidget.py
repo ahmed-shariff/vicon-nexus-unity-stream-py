@@ -1,28 +1,32 @@
-from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioSensorType
+from Phidget22.Phidget import *
+from Phidget22.Devices.VoltageRatioInput import *
 import time
 
-def onSensorChange(self, sensorValue, sensorUnit):
-	print("SensorValue: " + str(sensorValue))
-	print("SensorUnit: " + str(sensorUnit.symbol))
-	print("----------")
+def onVoltageRatioChange(self, voltageRatio):
+    if voltageRatio > 0.00001:
+        print("VoltageRatio: " + str(voltageRatio))
 
 def main():
-	voltageRatioInput0 = VoltageRatioInput()
+    voltageRatioInput0 = VoltageRatioInput()
+    
+    voltageRatioInput0.setIsHubPortDevice(True)
+    voltageRatioInput0.setHubPort(0)
 
-	voltageRatioInput0.setIsHubPortDevice(True)
-	voltageRatioInput0.setHubPort(0)
+    print(*[x for x in voltageRatioInput0.__dir__() if "DataInterval" in x], sep="\n")
+    
+    voltageRatioInput0.setOnVoltageRatioChangeHandler(onVoltageRatioChange)
+    
+    voltageRatioInput0.openWaitForAttachment(5000)
 
-	voltageRatioInput0.setOnSensorChangeHandler(onSensorChange)
+    print(voltageRatioInput0.getMinDataInterval(), voltageRatioInput0.getMaxDataInterval())
+    voltageRatioInput0.setDataInterval(100)
+    voltageRatioInput0.setSensorValueChangeTrigger(0.01)
+    try:
+        input("Press Enter to Stop\n")
+    except (Exception, KeyboardInterrupt):
+        pass
 
-	voltageRatioInput0.openWaitForAttachment(5000)
+    voltageRatioInput0.close()
 
-	voltageRatioInput0.setSensorType(VoltageRatioSensorType.SENSOR_TYPE_1120)
-
-	try:
-		input("Press Enter to Stop\n")
-	except (Exception, KeyboardInterrupt):
-		pass
-
-	voltageRatioInput0.close()
-
-main()
+if __name__ == "__main__":
+    main()
