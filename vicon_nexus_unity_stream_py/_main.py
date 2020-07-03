@@ -7,12 +7,20 @@ import log
 from flask import Flask
 from flask_restful import Resource, Api
 
+from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioSensorType
+
 try:
     from vicon_dssdk import ViconDataStream
 except ImportError:
     log.e("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
     raise
 
+sensor_triggered = False
+
+def onSensorChange(self, sensorValue, sensorUnit):
+    if sensorValue > 0.001:
+        global sensor_triggered
+        sensor_triggered = True
 
 def get_client(connection=None):
     if connection is None:
@@ -31,6 +39,18 @@ def get_client(connection=None):
     print(client.GetAxisMapping())
     return client
 
+def setup_phidget():
+    log.i("Setting up sensor")
+    voltageRatioInput0 = VoltageRatioInput()
+    voltageRatioInput0.setIsHubPortDevice(True)
+    voltageRatioInput0.setHubPort(0)
+    voltageRatioInput0.setOnSensorChangeHandler(onSensorChange)
+    voltageRatioInput0.openWaitForAttachment(5000)    
+    voltageRatioInput0.setSensorType(VoltageRatioSensorType.SENSOR_TYPE_1120)
+    voltageRatioInput0.setDataInterval(50)
+    log.i("sensor ready")
+    return voltageRatioInput0
+
 
 def _init_api(connection=None, host="127.0.0.1", port="5000"):
     try:
@@ -41,6 +61,12 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
         client = None
     app = Flask("vicon-ds")
     api = Api(app)
+    try:
+        sensor = setup_phidget()
+    except Exception as e:
+        log.e("Failed to connect to sensor")
+        log.e(e.message)
+        sensor = None
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
@@ -49,10 +75,15 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
             return "restart:  client didn't connect", 404
 
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
-    app.run(host=host, port=int(port))
+    try:
+        app.run(host=host, port=int(port))
+    finally:
+        if sensor is not None:
+            sensor.close()
 
 
 def get_data(client, data_type, subject_name):
+    global sensor_triggered
     data = {}
     # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
     # sprint(client.GetSegmentNames(subject_name))
@@ -68,6 +99,8 @@ def get_data(client, data_type, subject_name):
             # print(client.GetMarkerGlobalTranslation(subject_name, marker))
         data['data'] = marker_data
         data['hierachy'] = marker_segment_data
+        data['sensorTriggered'] = sensor_triggered
+        sensor_triggered = False
         
     elif data_type == "segment":
         segment_data = {}
