@@ -15,12 +15,13 @@ except ImportError:
     log.e("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
     raise
 
-sensor_triggered = False
+sensor_triggered = []
+previous_sensor_triggered = False
 
 def onSensorChange(self, sensorValue, sensorUnit):
-    if sensorValue > 0.001:
+    if sensorValue > 0.02:
         global sensor_triggered
-        sensor_triggered = True
+        sensor_triggered.append(1)
 
 def get_client(connection=None):
     if connection is None:
@@ -47,7 +48,7 @@ def setup_phidget():
     voltageRatioInput0.setOnSensorChangeHandler(onSensorChange)
     voltageRatioInput0.openWaitForAttachment(5000)    
     voltageRatioInput0.setSensorType(VoltageRatioSensorType.SENSOR_TYPE_1120)
-    voltageRatioInput0.setDataInterval(50)
+    voltageRatioInput0.setDataInterval(1)
     log.i("sensor ready")
     return voltageRatioInput0
 
@@ -83,7 +84,7 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
 
 
 def get_data(client, data_type, subject_name):
-    global sensor_triggered
+    global sensor_triggered, previous_sensor_triggered
     data = {}
     # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
     # sprint(client.GetSegmentNames(subject_name))
@@ -99,8 +100,18 @@ def get_data(client, data_type, subject_name):
             # print(client.GetMarkerGlobalTranslation(subject_name, marker))
         data['data'] = marker_data
         data['hierachy'] = marker_segment_data
-        data['sensorTriggered'] = sensor_triggered
-        sensor_triggered = False
+        
+        if len(sensor_triggered) > 1:
+            data['sensorTriggered'] = True
+            previous_sensor_triggered = True
+        elif previous_sensor_triggered:
+            data['sensorTriggered'] = True
+            previous_sensor_triggered = False
+        else:
+            data['sensorTriggered'] = False
+            previous_sensor_triggered = False
+        print(len(sensor_triggered), data['sensorTriggered'])
+        sensor_triggered = []
         
     elif data_type == "segment":
         segment_data = {}

@@ -3,7 +3,7 @@ from Phidget22.Devices.VoltageRatioInput import *
 import time
 
 def onVoltageRatioChange(self, voltageRatio):
-    if voltageRatio > 0.00001:
+    if voltageRatio > 0.02:
         print("VoltageRatio: " + str(voltageRatio))
 
 def main():
