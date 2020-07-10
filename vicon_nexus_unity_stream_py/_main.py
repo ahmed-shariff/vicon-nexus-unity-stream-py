@@ -19,7 +19,7 @@ sensor_triggered = []
 previous_sensor_triggered = False
 
 def onSensorChange(self, sensorValue, sensorUnit):
-    if sensorValue > 0.02:
+    if sensorValue > 0.03:
         global sensor_triggered
         sensor_triggered.append(1)
 
