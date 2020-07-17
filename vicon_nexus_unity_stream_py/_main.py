@@ -82,6 +82,34 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
         if sensor is not None:
             sensor.close()
 
+            
+def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None):
+    app = Flask("vicon-ds")
+    api = Api(app)
+    try:
+        sensor = setup_phidget()
+    except Exception as e:
+        log.e("Failed to connect to sensor")
+        log.e(e.message)
+        sensor = None
+
+    lines = []
+    with open(input_file) as f:
+        for l in f.lines():
+        
+    class ViconMarkerStream(Resource):
+        def get(self, data_type, subject_name):
+            if client is not None and client.IsConnected() and client.GetFrame():
+                return get_data(client, data_type, subject_name)
+            return "restart:  client didn't connect", 404
+
+    api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
+    try:
+        app.run(host=host, port=int(port))
+    finally:
+        if sensor is not None:
+            sensor.close()
+            
 
 def get_data(client, data_type, subject_name):
     global sensor_triggered, previous_sensor_triggered
