@@ -3,6 +3,7 @@
 """Main script."""
 
 import log
+import json
 
 from flask import Flask
 from flask_restful import Resource, Api
@@ -13,7 +14,7 @@ try:
     from vicon_dssdk import ViconDataStream
 except ImportError:
     log.e("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
-    raise
+    #raise
 
 sensor_triggered = []
 previous_sensor_triggered = False
@@ -82,33 +83,48 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
         if sensor is not None:
             sensor.close()
 
-            
+
+lines = []
+idx = 0
+
 def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None):
     app = Flask("vicon-ds")
     api = Api(app)
-    try:
-        sensor = setup_phidget()
-    except Exception as e:
-        log.e("Failed to connect to sensor")
-        log.e(e.message)
-        sensor = None
+    # try:
+    #     sensor = setup_phidget()
+    # except Exception as e:
+    #     log.e("Failed to connect to sensor")
+    #     log.e(e.message)
+    #     sensor = None
 
-    lines = []
+    _lines = []
     with open(input_file) as f:
-        for l in f.lines():
-        
+        for l in f.readlines():
+            if len(l.strip()) == 0:
+                continue
+            _lines.append(l.split(maxsplit=1)[-1])
+
+    global lines
+    lines = _lines
+    
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
-            if client is not None and client.IsConnected() and client.GetFrame():
-                return get_data(client, data_type, subject_name)
+            global idx
+            if data_type == "n":
+                idx += 1
+                return idx
+            elif data_type == "p":
+                idx -= 1
+                return idx
+            elif data_type== "s":
+                idx = int(subject_name)
+            else:
+                if subject_name == 'test':
+                    return json.loads(lines[idx])
             return "restart:  client didn't connect", 404
 
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
-    try:
-        app.run(host=host, port=int(port))
-    finally:
-        if sensor is not None:
-            sensor.close()
+    app.run(host=host, port=int(port))
             
 
 def get_data(client, data_type, subject_name):
