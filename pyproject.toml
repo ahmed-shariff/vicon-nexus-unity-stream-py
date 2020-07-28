@@ -29,13 +29,14 @@ include = ["vicon_nexus_unity_stream_py/static/index.html"]
 
 [tool.poetry.dependencies]
 
-python = "^3.6"
+python = "^3.6.1"
 
 # TODO: Remove these and add your library's requirements
 click = "^6.0"
 minilog = "^1.5"
 flask_restful = "^0.3.8"
 phidget22 = "^1.6.20200426"
+pandas = "^1.1.0"
 
 [tool.poetry.dev-dependencies]
 

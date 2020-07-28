@@ -6,6 +6,7 @@ import log
 import json
 import pandas as pd
 from pathlib import Path
+from datetime import datetime
 
 from flask import Flask, send_file
 from flask_restful import Resource, Api
@@ -88,6 +89,9 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
 
 LINES = []
 IDX = 0
+PLAY_MODE = False
+PLAY_INDEX = None
+PLAY_TS = None
 
 def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None):
     app = Flask("vicon-ds")
@@ -104,14 +108,18 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
         for l in f.readlines():
             if len(l.strip()) == 0:
                 continue
-            _lines.append(l.split(maxsplit=1))
+            _lines.append(l.rstrip().split(",", maxsplit=1))
 
     global LINES
-    LINES = pd.DataFrame(_lines).dropna()
+    LINES = pd.DataFrame(_lines)
+    LINES[1] = LINES[1].apply(lambda x: x if len(x) > 0 else None)
+    LINES = LINES.dropna()
+    LINES[0] = pd.to_numeric(LINES[0])
 
+    # TODO: better validation?
     class ViconMarkerStreamProcess(Resource):
         def get(self, process=None, param=None):
-            global IDX
+            global IDX, PLAY_MODE
             if process is None or process == "index":
                 return send_file(Path(__file__).parent / "static" / "index.html")
             elif process == "n":
@@ -128,11 +136,29 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
                     return IDX
                 except:
                     return "param should be a number. Use: /offline/s/<frame-number>", 404
+            elif process == "t":
+                PLAY_MODE = not PLAY_MODE
+                return PLAY_MODE
+            return "Process not recognized. Available processes: offline/n  = Next, offline/p = Previous, offline/s/<frame-number> = jump to frame-number, offline/t = toggle play mode", 404
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
+            global PLAY_INDEX, PLAY_TS
             if subject_name == 'test':
-                return json.loads(LINES.iloc[IDX, 1])
+                if PLAY_MODE:
+                    if PLAY_INDEX is None:
+                        PLAY_INDEX = LINES.iloc[IDX, 0]
+                        PLAY_TS = datetime.now().timestamp()
+                    index = LINES.iloc[:, 0]
+                    diff = (index - PLAY_INDEX)
+                    min_val = index[diff > 0].min()
+                    ts = datetime.now().timestamp()
+                    if ts - PLAY_TS >= 0:
+                        PLAY_INDEX = min_val
+                        PLAY_TS = ts
+                    return json.loads(LINES[index == PLAY_INDEX].iloc[0, 1])
+                else:
+                    return json.loads(LINES.iloc[IDX, 1])
             return "Only works for subject `test`", 404
 
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
