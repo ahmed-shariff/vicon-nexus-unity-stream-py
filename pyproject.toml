@@ -25,6 +25,7 @@ classifiers = [
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.6",
 ]
+include = ["vicon_nexus_unity_stream_py/static/index.html"]
 
 [tool.poetry.dependencies]
 

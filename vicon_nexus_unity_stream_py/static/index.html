@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+	<title>Vicon Offline Playback</title>
+	<meta charset="utf-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1">
+	<link rel="stylesheet" href="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/css/bootstrap.min.css">
+	<script src="https://ajax.googleapis.com/ajax/libs/jquery/3.5.1/jquery.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.16.0/umd/popper.min.js"></script>
+	<script src="https://maxcdn.bootstrapcdn.com/bootstrap/4.5.0/js/bootstrap.min.js"></script>
+	<script>
+	 function displayText (data, status){
+	     $('#output').text(data);
+	 }
+	 $(document).ready(function() {
+	     $("#btnNext").click(function(){
+		 $.get("/offline/n", displayText);
+	     });
+	     
+	     $("#btnPrev").click(function(){
+		 $.get("/offline/p", displayText);
+	     });
+
+	     $("#btnJump").click(function(){
+		 $.get("/offline/s/" + $('#txtJump').val(), displayText);
+	     });
+
+	     $("#btnToggle").click(function(){
+		 $.get("/offline/t", displayText);
+	     });
+	 });
+	</script>
+    </head>
+    <body>
+
+	<div class="container">
+	    <div class="row">
+		<div class="col-sm-12 mt-4">
+		    <div class="alert alert-info" id="output"></div>
+		</div>
+	    </div>
+	    <div class="row">
+		<div class="col-sm-12 mt-2">
+		    <button id="btnNext" type="button" style="width:100%" class="btn btn-primary">Next Frame</button>
+		</div>
+	    </div>
+	    <div class="row">
+		<div class="col-sm-12 mt-2">
+		    <button id="btnPrev" type="button" style="width:100%" class="btn btn-primary">Previous Frame</button>
+		</div>
+	    </div>
+	    <div class="row">
+		<div class="col-sm-6 mt-2">
+		    <button id="btnJump" type="button" style="width:100%" class="btn btn-primary">Jump to:</button>
+		</div>
+		<div class="col-sm-6 mt-2">
+		    <input type="text" id="txtJump" name="txtJump" class="form-control">
+		</div>
+	    </div>
+	    <div class="row">
+		<div class="col-sm-12 mt-5">
+		</div>
+	    </div>
+	    <div class="row">
+		<div class="col-sm-12 mt-5">
+		    <button id="btnToggle" type="button" style="width:100%" class="btn btn-primary">Toggle play</button>
+		</div>
+	    </div>
+	</div>
+
+    </body>
+</html>

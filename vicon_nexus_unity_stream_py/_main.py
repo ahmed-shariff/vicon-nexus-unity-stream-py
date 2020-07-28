@@ -4,8 +4,10 @@
 
 import log
 import json
+import pandas as pd
+from pathlib import Path
 
-from flask import Flask
+from flask import Flask, send_file
 from flask_restful import Resource, Api
 
 from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioSensorType
@@ -84,8 +86,8 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
             sensor.close()
 
 
-lines = []
-idx = 0
+LINES = []
+IDX = 0
 
 def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None):
     app = Flask("vicon-ds")
@@ -102,28 +104,39 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
         for l in f.readlines():
             if len(l.strip()) == 0:
                 continue
-            _lines.append(l.split(maxsplit=1)[-1])
+            _lines.append(l.split(maxsplit=1))
 
-    global lines
-    lines = _lines
-    
+    global LINES
+    LINES = pd.DataFrame(_lines).dropna()
+
+    class ViconMarkerStreamProcess(Resource):
+        def get(self, process=None, param=None):
+            global IDX
+            if process is None or process == "index":
+                return send_file(Path(__file__).parent / "static" / "index.html")
+            elif process == "n":
+                IDX += 1
+                return IDX
+            elif process == "p":
+                IDX -= 1
+                return IDX
+            elif process == "s":
+                if param is None:
+                    return "param cannot be empty. Use: /offline/s/<frame-number>", 404
+                try:
+                    IDX = int(param)
+                    return IDX
+                except:
+                    return "param should be a number. Use: /offline/s/<frame-number>", 404
+
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
-            global idx
-            if data_type == "n":
-                idx += 1
-                return idx
-            elif data_type == "p":
-                idx -= 1
-                return idx
-            elif data_type== "s":
-                idx = int(subject_name)
-            else:
-                if subject_name == 'test':
-                    return json.loads(lines[idx])
-            return "restart:  client didn't connect", 404
+            if subject_name == 'test':
+                return json.loads(LINES.iloc[IDX, 1])
+            return "Only works for subject `test`", 404
 
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
+    api.add_resource(ViconMarkerStreamProcess, '/offline/<string:process>', '/offline/<string:process>/<string:param>', '/offline')
     app.run(host=host, port=int(port))
             
 
