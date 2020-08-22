@@ -119,7 +119,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     # TODO: better validation?
     class ViconMarkerStreamProcess(Resource):
         def get(self, process=None, param=None):
-            global IDX, PLAY_MODE
+            global IDX, PLAY_MODE, PLAY_INDEX, PLAY_TS
             if process is None or process == "index":
                 return send_file(Path(__file__).parent / "static" / "index.html")
             elif process == "n":
@@ -138,6 +138,11 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
                     return "param should be a number. Use: /offline/s/<frame-number>", 404
             elif process == "t":
                 PLAY_MODE = not PLAY_MODE
+                if PLAY_MODE:
+                    PLAY_INDEX = LINES.iloc[IDX, 0]
+                    PLAY_TS = datetime.now().timestamp()
+                else:
+                    IDX = int(LINES[LINES.iloc[:, 0] == PLAY_INDEX].index[0])
                 return PLAY_MODE
             return "Process not recognized. Available processes: offline/n  = Next, offline/p = Previous, offline/s/<frame-number> = jump to frame-number, offline/t = toggle play mode", 404
 
@@ -146,9 +151,6 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
             global PLAY_INDEX, PLAY_TS
             if subject_name == 'test':
                 if PLAY_MODE:
-                    if PLAY_INDEX is None:
-                        PLAY_INDEX = LINES.iloc[IDX, 0]
-                        PLAY_TS = datetime.now().timestamp()
                     index = LINES.iloc[:, 0]
                     diff = (index - PLAY_INDEX)
                     min_val = index[diff > 0].min()
@@ -156,6 +158,9 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
                     if ts - PLAY_TS >= 0:
                         PLAY_INDEX = min_val
                         PLAY_TS = ts
+                    if min_val == index.max():
+                        PLAY_INDEX = index.min()
+                        PLAY_TS = datetime.now().timestamp()
                     return json.loads(LINES[index == PLAY_INDEX].iloc[0, 1])
                 else:
                     return json.loads(LINES.iloc[IDX, 1])
