@@ -70,7 +70,7 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
         sensor = setup_phidget()
     except Exception as e:
         log.e("Failed to connect to sensor")
-        log.e(e.message)
+        log.e(e)
         sensor = None
 
     class ViconMarkerStream(Resource):
