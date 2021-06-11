@@ -10,6 +10,7 @@ from datetime import datetime
 
 from flask import Flask, send_file
 from flask_restful import Resource, Api
+from loguru import logger
 
 from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioSensorType
 
@@ -41,7 +42,7 @@ def get_client(connection=None):
 ##    client.SetAxisMapping(ViconDataStream.Client.AxisMapping.EForward,
 ##                          ViconDataStream.Client.AxisMapping.EUp,
 ##                          ViconDataStream.Client.AxisMapping.ELeft)
-    print(client.GetAxisMapping())
+    logger.info(client.GetAxisMapping())
     return client
 
 def setup_phidget():
@@ -174,8 +175,8 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 def get_data(client, data_type, subject_name):
     global sensor_triggered, previous_sensor_triggered
     data = {}
-    # print(*[n for n in client.__dir__() if "G" in n], sep="\n")
-    # sprint(client.GetSegmentNames(subject_name))
+    # logger.info(*[n for n in client.__dir__() if "G" in n], sep="\n")
+    # slogger.info(client.GetSegmentNames(subject_name))
     if data_type == "marker":
         marker_segment_data = {}
         marker_data = {}
@@ -185,7 +186,7 @@ def get_data(client, data_type, subject_name):
             except KeyError:
                 marker_segment_data[segment] = [marker]
             marker_data[marker] = client.GetMarkerGlobalTranslation(subject_name, marker)[0]
-            # print(client.GetMarkerGlobalTranslation(subject_name, marker))
+            # logger.info(client.GetMarkerGlobalTranslation(subject_name, marker))
         data['data'] = marker_data
         data['hierachy'] = marker_segment_data
         
@@ -198,7 +199,7 @@ def get_data(client, data_type, subject_name):
         else:
             data['sensorTriggered'] = False
             previous_sensor_triggered = False
-        print(len(sensor_triggered), data['sensorTriggered'])
+        logger.info(len(sensor_triggered), data['sensorTriggered'])
         sensor_triggered = []
         
     elif data_type == "segment":
@@ -217,7 +218,7 @@ def main(connection=None):
     try:
         while client.IsConnected():
             if client.GetFrame():
-                print(get_data(client, 'test'))
+                logger.info(get_data(client, 'test'))
 
     except ViconDataStream.DataStreamException as e:
         log.e( f'Error: {e}' )

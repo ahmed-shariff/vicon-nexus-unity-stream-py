@@ -2,14 +2,6 @@
 
 Python script to stream data from vicon nexus to unity
 
-This project was generated with [cookiecutter](https://github.com/audreyr/cookiecutter) using [jacebrowning/template-python](https://github.com/jacebrowning/template-python).
-
-[![Unix Build Status](https://img.shields.io/travis/ahmed-shariff/vicon_nexus_unity_stream_py/master.svg?label=unix)](https://travis-ci.org/ahmed-shariff/vicon_nexus_unity_stream_py)
-[![Windows Build Status](https://img.shields.io/appveyor/ci/ahmed-shariff/vicon_nexus_unity_stream_py/master.svg?label=windows)](https://ci.appveyor.com/project/ahmed-shariff/vicon_nexus_unity_stream_py)
-[![Coverage Status](https://img.shields.io/coveralls/ahmed-shariff/vicon_nexus_unity_stream_py/master.svg)](https://coveralls.io/r/ahmed-shariff/vicon_nexus_unity_stream_py)
-[![Scrutinizer Code Quality](https://img.shields.io/scrutinizer/g/ahmed-shariff/vicon_nexus_unity_stream_py.svg)](https://scrutinizer-ci.com/g/ahmed-shariff/vicon_nexus_unity_stream_py/?branch=master)
-[![PyPI Version](https://img.shields.io/pypi/v/vicon_nexus_unity_stream_py.svg)](https://pypi.org/project/vicon_nexus_unity_stream_py)
-[![PyPI License](https://img.shields.io/pypi/l/vicon_nexus_unity_stream_py.svg)](https://pypi.org/project/vicon_nexus_unity_stream_py)
 
 # Setup
 
@@ -33,10 +25,22 @@ $ poetry add vicon_nexus_unity_stream_py
 
 # Usage
 
-After installation, the package can imported:
+After installation, the package can be used as a cli tool:
 
 ```text
-$ python
->>> import vicon_nexus_unity_stream_py
->>> vicon_nexus_unity_stream_py.__version__
+$ vicon-nexus-stream --help
+
+Usage: vicon-nexus-stream [OPTIONS] COMMAND [ARGS]...
+
+Options:
+  --help  Show this message and exit.
+
+Commands:
+  server  Connects to the vicon and streams the data...
+  stream  Instead of connecting to vicon, streams data...
+  test    Test if connection is working
 ```
+
+
+# Credits
+This project was generated with [cookiecutter](https://github.com/audreyr/cookiecutter) using [jacebrowning/template-python](https://github.com/jacebrowning/template-python).
