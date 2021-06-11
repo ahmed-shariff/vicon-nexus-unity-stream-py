@@ -119,21 +119,30 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 
     # TODO: better validation?
     class ViconMarkerStreamProcess(Resource):
+        def _set_index(self, idx):
+            global IDX
+            if idx >= LINES.index.max():
+                IDX = 0
+            elif idx < 0:
+                IDX = int(LINES.index.max())
+            else:
+                IDX = idx
+        
         def get(self, process=None, param=None):
             global IDX, PLAY_MODE, PLAY_INDEX, PLAY_TS
             if process is None or process == "index":
                 return send_file(Path(__file__).parent / "static" / "index.html")
             elif process == "n":
-                IDX += 1
+                self._set_index(IDX + 1)
                 return IDX
             elif process == "p":
-                IDX -= 1
+                self._set_index(IDX - 1)
                 return IDX
             elif process == "s":
                 if param is None:
                     return "param cannot be empty. Use: /offline/s/<frame-number>", 404
                 try:
-                    IDX = int(param)
+                    self._set_index(int(param))
                     return IDX
                 except:
                     return "param should be a number. Use: /offline/s/<frame-number>", 404
@@ -143,7 +152,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
                     PLAY_INDEX = LINES.iloc[IDX, 0]
                     PLAY_TS = datetime.now().timestamp()
                 else:
-                    IDX = int(LINES[LINES.iloc[:, 0] == PLAY_INDEX].index[0])
+                    self._set_index(int(LINES[LINES.iloc[:, 0] == PLAY_INDEX].index[0]))
                 return PLAY_MODE
             return "Process not recognized. Available processes: offline/n  = Next, offline/p = Previous, offline/s/<frame-number> = jump to frame-number, offline/t = toggle play mode", 404
 
