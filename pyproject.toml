@@ -29,7 +29,7 @@ include = ["vicon_nexus_unity_stream_py/static/index.html"]
 
 [tool.poetry.dependencies]
 
-python = "^3.6.1"
+python = ">=3.6.1,<4.0"
 
 # TODO: Remove these and add your library's requirements
 click = "^6.0"

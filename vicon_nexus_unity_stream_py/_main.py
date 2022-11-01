@@ -2,7 +2,6 @@
 
 """Main script."""
 
-import log
 import json
 import pandas as pd
 from pathlib import Path
@@ -33,10 +32,10 @@ def get_client(connection=None):
         connection = 'localhost:801'
     client = ViconDataStream.Client()
 
-    log.i('Connecting...')
+    logger.info('Connecting...')
     while not client.IsConnected():
         client.Connect(connection)
-    log.i('Connected to vicon data stream')
+    logger.info('Connected to vicon data stream')
     client.EnableSegmentData()
     client.EnableMarkerData()
 ##    client.SetAxisMapping(ViconDataStream.Client.AxisMapping.EForward,
@@ -46,7 +45,7 @@ def get_client(connection=None):
     return client
 
 def setup_phidget():
-    log.i("Setting up sensor")
+    logger.info("Setting up sensor")
     voltageRatioInput0 = VoltageRatioInput()
     voltageRatioInput0.setIsHubPortDevice(True)
     voltageRatioInput0.setHubPort(0)
@@ -54,7 +53,7 @@ def setup_phidget():
     voltageRatioInput0.openWaitForAttachment(5000)    
     voltageRatioInput0.setSensorType(VoltageRatioSensorType.SENSOR_TYPE_1120)
     voltageRatioInput0.setDataInterval(1)
-    log.i("sensor ready")
+    logger.info("sensor ready")
     return voltageRatioInput0
 
 
