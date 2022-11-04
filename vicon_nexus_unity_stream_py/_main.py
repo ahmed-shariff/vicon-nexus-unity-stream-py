@@ -8,7 +8,7 @@ import pandas as pd
 from pathlib import Path
 from datetime import datetime
 
-from flask import Flask, send_file
+from flask import Flask, send_file, make_response
 from flask_restful import Resource, Api
 from loguru import logger
 
@@ -58,6 +58,18 @@ def setup_phidget():
     return voltageRatioInput0
 
 
+def process_return_value(ret_val, use_json=False):
+    if use_json:
+        return ret_val
+    else:
+        if isinstance(ret_val, tuple):
+            response = make_response(msgpack.packb(ret_val[0]), ret_val[1])
+        else:
+            response = make_response(msgpack.packb(ret_val))
+        response.headers['content-type'] = 'application/msgpack'
+        return response
+
+
 def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     try:
         client = get_client(connection)
@@ -77,13 +89,7 @@ def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
             ret_val = self._get(data_type, subject_name)
-            if use_json:
-                return ret_val
-            else:
-                if isinstance(ret_val, tuple):
-                    return msgpack.packb(ret_val[0]), ret_val[1]
-                else:
-                    return msgpack.packb(ret_val)
+            return process_return_value(ret_val, use_json)
 
         def _get(self, data_type, subject_name):
             if client is not None and client.IsConnected() and client.GetFrame():
@@ -114,6 +120,10 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     #     logger.error(e.message)
     #     sensor = None
 
+    if input_file is None or len(input_file) == 0:
+        logger.error("`input_file` cannot be empty")
+        return
+
     _lines = []
     with open(input_file) as f:
         for l in f.readlines():
@@ -140,13 +150,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 
         def get(self, process=None, param=None):
             ret_val = self._get(process, param)
-            if use_json:
-                return ret_val
-            else:
-                if isinstance(ret_val, tuple):
-                    return msgpack.packb(ret_val[0]), ret_val[1]
-                else:
-                    return msgpack.packb(ret_val)
+            return process_return_value(ret_val, use_json)
 
         def _get(self, process=None, param=None):
             global IDX, PLAY_MODE, PLAY_INDEX, PLAY_TS
@@ -179,13 +183,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
             ret_val = self._get(data_type, subject_name)
-            if use_json:
-                return ret_val
-            else:
-                if isinstance(ret_val, tuple):
-                    return msgpack.packb(ret_val[0]), ret_val[1]
-                else:
-                    return msgpack.packb(ret_val)
+            return process_return_value(ret_val, use_json)
 
         def _get(self, data_type, subject_name):
             global PLAY_INDEX, PLAY_TS

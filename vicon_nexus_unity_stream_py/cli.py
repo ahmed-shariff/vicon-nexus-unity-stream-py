@@ -29,7 +29,7 @@ def server(connection, host, port):
 @click.option("-c", "--connection", default='localhost:801')
 @click.option("-h", "--host", default='127.0.0.1')
 @click.option("-p", "--port", default='5000')
-@click.option("-f", "--file", default='')
+@click.option("-f", "--file", default=None)
 def stream(connection, host, port, file):
     """
     Instead of connecting to vicon, streams data from a csv file. The format of the file is
