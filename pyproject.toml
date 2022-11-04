@@ -38,6 +38,7 @@ phidget22 = "^1.6.20200426"
 pandas = "^1.5.1"
 loguru = "^0.5.0"
 Flask-RESTful = "^0.3.9"
+msgpack = "^1.0.4"
 
 [tool.poetry.dev-dependencies]
 

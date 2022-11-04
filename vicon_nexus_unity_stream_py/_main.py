@@ -3,6 +3,7 @@
 """Main script."""
 
 import json
+import msgpack
 import pandas as pd
 from pathlib import Path
 from datetime import datetime
@@ -57,7 +58,7 @@ def setup_phidget():
     return voltageRatioInput0
 
 
-def _init_api(connection=None, host="127.0.0.1", port="5000"):
+def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     try:
         client = get_client(connection)
     except Exception as e:
@@ -75,6 +76,16 @@ def _init_api(connection=None, host="127.0.0.1", port="5000"):
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
+            ret_val = self._get(data_type, subject_name)
+            if use_json:
+                return ret_val
+            else:
+                if isinstance(ret_val, tuple):
+                    return msgpack.packb(ret_val[0]), ret_val[1]
+                else:
+                    return msgpack.packb(ret_val)
+
+        def _get(self, data_type, subject_name):
             if client is not None and client.IsConnected() and client.GetFrame():
                 return get_data(client, data_type, subject_name)
             return "restart:  client didn't connect", 404
@@ -93,7 +104,7 @@ PLAY_MODE = False
 PLAY_INDEX = None
 PLAY_TS = None
 
-def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None):
+def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None, use_json=False):
     app = Flask("vicon-ds")
     api = Api(app)
     # try:
@@ -126,8 +137,18 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
                 IDX = int(LINES.index.max())
             else:
                 IDX = idx
-        
+
         def get(self, process=None, param=None):
+            ret_val = self._get(process, param)
+            if use_json:
+                return ret_val
+            else:
+                if isinstance(ret_val, tuple):
+                    return msgpack.packb(ret_val[0]), ret_val[1]
+                else:
+                    return msgpack.packb(ret_val)
+
+        def _get(self, process=None, param=None):
             global IDX, PLAY_MODE, PLAY_INDEX, PLAY_TS
             if process is None or process == "index":
                 return send_file(Path(__file__).parent / "static" / "index.html")
@@ -157,6 +178,16 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
+            ret_val = self._get(data_type, subject_name)
+            if use_json:
+                return ret_val
+            else:
+                if isinstance(ret_val, tuple):
+                    return msgpack.packb(ret_val[0]), ret_val[1]
+                else:
+                    return msgpack.packb(ret_val)
+
+        def _get(self, data_type, subject_name):
             global PLAY_INDEX, PLAY_TS
             if subject_name == 'test':
                 if PLAY_MODE:
