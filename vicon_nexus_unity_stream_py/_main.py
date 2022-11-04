@@ -17,7 +17,7 @@ from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioS
 try:
     from vicon_dssdk import ViconDataStream
 except ImportError:
-    log.e("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
+    logger.error("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
     #raise
 
 sensor_triggered = []
@@ -62,16 +62,16 @@ def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     try:
         client = get_client(connection)
     except Exception as e:
-        log.e("Failed to connect to client")
-        log.e(e.message)
+        logger.error("Failed to connect to client")
+        logger.error(e.message)
         client = None
     app = Flask("vicon-ds")
     api = Api(app)
     try:
         sensor = setup_phidget()
     except Exception as e:
-        log.e("Failed to connect to sensor")
-        log.e(e)
+        logger.error("Failed to connect to sensor")
+        logger.error(e)
         sensor = None
 
     class ViconMarkerStream(Resource):
@@ -110,8 +110,8 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     # try:
     #     sensor = setup_phidget()
     # except Exception as e:
-    #     log.e("Failed to connect to sensor")
-    #     log.e(e.message)
+    #     logger.error("Failed to connect to sensor")
+    #     logger.error(e.message)
     #     sensor = None
 
     _lines = []
@@ -238,7 +238,7 @@ def get_data(client, data_type, subject_name):
         else:
             data['sensorTriggered'] = False
             previous_sensor_triggered = False
-        logger.info(len(sensor_triggered), data['sensorTriggered'])
+        logger.info(f"{len(sensor_triggered)}, {data['sensorTriggered']}")
         sensor_triggered = []
         
     elif data_type == "segment":
@@ -260,7 +260,7 @@ def main(connection=None):
                 logger.info(get_data(client, 'test'))
 
     except ViconDataStream.DataStreamException as e:
-        log.e( f'Error: {e}' )
+        logger.error( f'Error: {e}' )
 
 
 if __name__ == '__main__':  # pragma: no cover
