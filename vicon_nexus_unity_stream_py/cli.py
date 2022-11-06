@@ -20,9 +20,10 @@ def test(connection):
 @click.option("-c", "--connection", default='localhost:801')
 @click.option("-h", "--host", default='127.0.0.1')
 @click.option("-p", "--port", default='5000')
-def server(connection, host, port):
+@click.option("-j", "--use-json", default=False, is_flag=True)
+def server(connection, host, port, use_json):
     """Connects to the vicon and streams the data out through host:port"""
-    _init_api(connection, host, port)
+    _init_api(connection=connection, host=host, port=port, use_json=use_json)
 
 
 @click.command()
@@ -30,12 +31,13 @@ def server(connection, host, port):
 @click.option("-h", "--host", default='127.0.0.1')
 @click.option("-p", "--port", default='5000')
 @click.option("-f", "--file", default=None)
-def stream(connection, host, port, file):
+@click.option("-j", "--use-json", default=False, is_flag=True)
+def stream(connection, host, port, file, use_json):
     """
     Instead of connecting to vicon, streams data from a csv file. The format of the file is
     the same as the one recorded by https://github.com/ahmed-shariff/vicon-nexus-unity-stream.
     """
-    _init_api_static(connection, host, port, file)
+    _init_api_static(connection=connection, host=host, port=port, input_file=file, use_json=use_json)
 
 
 _main.add_command(test)

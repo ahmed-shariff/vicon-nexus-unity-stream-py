@@ -150,7 +150,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 
         def get(self, process=None, param=None):
             ret_val = self._get(process, param)
-            return process_return_value(ret_val, use_json)
+            return process_return_value(ret_val, use_json=True)
 
         def _get(self, process=None, param=None):
             global IDX, PLAY_MODE, PLAY_INDEX, PLAY_TS
@@ -206,6 +206,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
 
     api.add_resource(ViconMarkerStream, '/<string:data_type>/<string:subject_name>')
     api.add_resource(ViconMarkerStreamProcess, '/offline/<string:process>', '/offline/<string:process>/<string:param>', '/offline')
+    print(f"Go to `http://{host}:{port}/offline/index` to access the web UI")
     app.run(host=host, port=int(port))
             
 
