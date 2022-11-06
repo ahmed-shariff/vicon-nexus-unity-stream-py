@@ -1,7 +1,7 @@
 [tool.poetry]
 
 name = "vicon_nexus_unity_stream_py"
-version = "0.1.0-alpha.0"
+version = "0.2"
 description = "Python script to stream data from vicon nexus to unity"
 
 license = "MIT"
@@ -23,7 +23,7 @@ classifiers = [
     "Operating System :: OS Independent",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.6",
+    "Programming Language :: Python :: 3.8",
 ]
 include = ["vicon_nexus_unity_stream_py/static/index.html"]
 

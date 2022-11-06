@@ -1,4 +1,4 @@
-from pkg_resources import get_distribution, DistributionNotFound
+__version__ = "0.2"
 
 import logging
 from loguru import logger
@@ -20,8 +20,3 @@ class __InterceptHandler(logging.Handler):
         logger.opt(depth=depth, exception=record.exc_info).log(level, record.getMessage())
 
 logging.basicConfig(handlers=[__InterceptHandler()], level=0)
-
-try:
-    __version__ = get_distribution('vicon_nexus_unity_stream_py').version
-except DistributionNotFound:
-    __version__ = '(local)'
