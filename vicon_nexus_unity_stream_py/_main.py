@@ -12,21 +12,11 @@ from flask import Flask, send_file, make_response
 from flask_restful import Resource, Api
 from loguru import logger
 
-from Phidget22.Devices.VoltageRatioInput import VoltageRatioInput, VoltageRatioSensorType
-
 try:
     from vicon_dssdk import ViconDataStream
 except ImportError:
     logger.error("Make sure vicon DataStreamSDK is installed: Follow the instructions in https://www.vicon.com/software/datastream-sdk/\n")
     #raise
-
-sensor_triggered = []
-previous_sensor_triggered = False
-
-def onSensorChange(self, sensorValue, sensorUnit):
-    if sensorValue > 0.03:
-        global sensor_triggered
-        sensor_triggered.append(1)
 
 def get_client(connection=None):
     if connection is None:
@@ -45,18 +35,6 @@ def get_client(connection=None):
     logger.info(client.GetAxisMapping())
     return client
 
-def setup_phidget():
-    logger.info("Setting up sensor")
-    voltageRatioInput0 = VoltageRatioInput()
-    voltageRatioInput0.setIsHubPortDevice(True)
-    voltageRatioInput0.setHubPort(0)
-    voltageRatioInput0.setOnSensorChangeHandler(onSensorChange)
-    voltageRatioInput0.openWaitForAttachment(5000)    
-    voltageRatioInput0.setSensorType(VoltageRatioSensorType.SENSOR_TYPE_1120)
-    voltageRatioInput0.setDataInterval(1)
-    logger.info("sensor ready")
-    return voltageRatioInput0
-
 
 def process_return_value(ret_val, use_json=False):
     if use_json:
@@ -74,17 +52,10 @@ def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     try:
         client = get_client(connection)
     except Exception as e:
-        logger.error("Failed to connect to client")
-        logger.error(e.message)
+        logger.exception("Failed to connect to client")
         client = None
     app = Flask("vicon-ds")
     api = Api(app)
-    try:
-        sensor = setup_phidget()
-    except Exception as e:
-        logger.error("Failed to connect to sensor")
-        logger.error(e)
-        sensor = None
 
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
@@ -100,8 +71,7 @@ def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     try:
         app.run(host=host, port=int(port))
     finally:
-        if sensor is not None:
-            sensor.close()
+        pass
 
 
 LINES = []
@@ -113,12 +83,6 @@ PLAY_TS = None
 def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=None, use_json=False):
     app = Flask("vicon-ds")
     api = Api(app)
-    # try:
-    #     sensor = setup_phidget()
-    # except Exception as e:
-    #     logger.error("Failed to connect to sensor")
-    #     logger.error(e.message)
-    #     sensor = None
 
     if input_file is None or len(input_file) == 0:
         logger.error("`input_file` cannot be empty")
@@ -211,7 +175,6 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
             
 
 def get_data(client, data_type, subject_name):
-    global sensor_triggered, previous_sensor_triggered
     data = {}
     # logger.info(*[n for n in client.__dir__() if "G" in n], sep="\n")
     # slogger.info(client.GetSegmentNames(subject_name))
@@ -227,18 +190,6 @@ def get_data(client, data_type, subject_name):
             # logger.info(client.GetMarkerGlobalTranslation(subject_name, marker))
         data['data'] = marker_data
         data['hierachy'] = marker_segment_data
-        
-        if len(sensor_triggered) > 1:
-            data['sensorTriggered'] = True
-            previous_sensor_triggered = True
-        elif previous_sensor_triggered:
-            data['sensorTriggered'] = True
-            previous_sensor_triggered = False
-        else:
-            data['sensorTriggered'] = False
-            previous_sensor_triggered = False
-        logger.info(f"{len(sensor_triggered)}, {data['sensorTriggered']}")
-        sensor_triggered = []
         
     elif data_type == "segment":
         segment_data = {}
