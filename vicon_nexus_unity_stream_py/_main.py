@@ -2,6 +2,7 @@
 
 """Main script."""
 
+import sys
 import json
 import msgpack
 import pandas as pd
@@ -11,6 +12,7 @@ from datetime import datetime
 from flask import Flask, send_file, make_response
 from flask_restful import Resource, Api
 from loguru import logger
+from alive_progress import alive_bar
 
 try:
     from vicon_dssdk import ViconDataStream
@@ -57,9 +59,12 @@ def _init_api(connection=None, host="127.0.0.1", port="5000", use_json=False):
     app = Flask("vicon-ds")
     api = Api(app)
 
+    fpsDisplay = FpsDisplay()
+
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
             ret_val = self._get(data_type, subject_name)
+            fpsDisplay.update(subject_name)
             return process_return_value(ret_val, use_json)
 
         def _get(self, data_type, subject_name):
@@ -100,6 +105,8 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     LINES[1] = LINES[1].apply(lambda x: x if len(x) > 0 else None)
     LINES = LINES.dropna()
     LINES[0] = pd.to_numeric(LINES[0])
+
+    fpsDisplay = FpsDisplay()
 
     # TODO: better validation?
     class ViconMarkerStreamProcess(Resource):
@@ -147,6 +154,7 @@ def _init_api_static(connection=None, host="127.0.0.1", port="5000", input_file=
     class ViconMarkerStream(Resource):
         def get(self, data_type, subject_name):
             ret_val = self._get(data_type, subject_name)
+            fpsDisplay.update(subject_name)
             return process_return_value(ret_val, use_json)
 
         def _get(self, data_type, subject_name):
@@ -200,6 +208,38 @@ def get_data(client, data_type, subject_name):
         data['data'] = segment_data
             
     return data
+
+
+class FpsDisplay:
+    def __init__(self) -> None:
+        self._max = 200
+        self._bar_obj = alive_bar(self._max, manual=True, force_tty=True, length=110, enrich_print=False,
+                                  monitor="{count}/{total}", dual_line=True, title="   fps", elapsed=False,
+                                  stats=False, spinner="classic")
+        self._bar = self._bar_obj.__enter__()
+        logger.configure(handlers=[dict(sink=sys.stdout)])
+        self.lastTs = datetime.now().timestamp()
+        self.count = 0
+        self.fps = 0
+        self.seen_name = None
+
+    def update(self, name):
+        if self.seen_name == None:
+            self.seen_name = name
+        elif name != self.seen_name:
+            return
+        newTs = datetime.now().timestamp()
+        if newTs > self.lastTs + 1:
+            self.lastTs = newTs
+            self.fps = self.count / self._max
+            self.count = 0
+        else:
+            self.count += 1
+        self._bar(self.fps)
+
+    def close(self):
+        self._bar.__exit__()
+        logger.configure()
 
 
 def main(connection=None):
