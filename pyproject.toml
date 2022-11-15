@@ -1,7 +1,7 @@
 [tool.poetry]
 
 name = "vicon_nexus_unity_stream_py"
-version = "0.2"
+version = "0.2.1"
 description = "Python script to stream data from vicon nexus to unity"
 
 license = "MIT"
